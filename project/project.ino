@@ -47,7 +47,7 @@ void setup()
   LoadCell.begin();
 
   lcd.setCursor(0, 0);
-  lcd.print("Berat: ");
+  lcd.print("Brt: ");
   lcd.setCursor(14, 0);
   lcd.print("gr");
 
@@ -70,34 +70,32 @@ void setup()
   }
 }
 
-void loop()
-{
+void loop() {
   char key = keypad.getKey();
-
-  //  Start looping for load cell
   static boolean newDataReady = 0;
-  const int serialPrintInterval = 0;
-
+  const int serialPrintInterval = 0; 
   // check for new data/start next conversion:
-  if (LoadCell.update())
-    newDataReady = true;
+  if (LoadCell.update()) newDataReady = true;
 
   // get smoothed value from the dataset:
-  if (newDataReady)
-  {
-    if (millis() > t + serialPrintInterval)
-    {
+  if (newDataReady) {
+    if (millis() > t + serialPrintInterval) {
       int i = LoadCell.getData();
       Serial.print("Load_cell output val: ");
       Serial.println(i);
-      if (i < 0)
-      {
-        i = 0;
+      if(i<0){
+        i=0;
       }
+      tampil(i);
+      newDataReady = 0;
+      t = millis();
+    }
+  }
 
-      // Keypad condition
+ // Keypad logic
       if (key)
       {
+        Serial.print(key);
         if (key == '*')
         {
           isKeyActive = true;
@@ -118,41 +116,24 @@ void loop()
           passDisplay(stringAngka);
         }
       }
-
-      if (i >= stringAngka)
-      {
-        servo.write(0);
-      }
-      
-      // Show weight
-      tampil(i);
-      newDataReady = 0;
-      t = millis();
-
-      
-    }
-  }
-  if (Serial.available() > 0)
-  {
+  
+  if(Serial.available() > 0){
     float i;
     char inByte = Serial.read();
-    if (inByte == 't')
-      LoadCell.tareNoDelay(); // tare
+    if (inByte == 't') LoadCell.tareNoDelay(); //tare
   }
 
   // check if last tare operation is complete
-  if (LoadCell.getTareStatus() == true)
-  {
+  if (LoadCell.getTareStatus() == true) {
     Serial.println("Tara selesai");
   }
-
 }
 
 void passDisplay(String password)
 {
   lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print("Berat: ");
+  lcd.print("Brt: ");
   lcd.print(password);
 }
 
