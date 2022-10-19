@@ -76,47 +76,50 @@ void loop() {
   const int serialPrintInterval = 0; 
   // check for new data/start next conversion:
   if (LoadCell.update()) newDataReady = true;
+  
 
   // get smoothed value from the dataset:
   if (newDataReady) {
     if (millis() > t + serialPrintInterval) {
       int i = LoadCell.getData();
-      Serial.print("Load_cell output val: ");
-      Serial.println(i);
+      
       if(i<0){
         i=0;
       }
-      tampil(i);
-      newDataReady = 0;
-      t = millis();
-    }
-  }
 
- // Keypad logic
+     // Keypad logic
       if (key)
       {
         Serial.print(key);
-        if (key == '*')
+        if (key == '0')
         {
-          isKeyActive = true;
-        }
-        else if (key == '#')
-        {
-          isKeyActive = false;
+//           isKeyActive = true;
+          // isKeyActive = false;
+          
           servo.write(90);
-        }
-        else if (key == 'C')
-        {
-          stringAngka = "";
-          passDisplay(stringAngka);
-        }
-        else if (isKeyActive)
-        {
-          stringAngka += key;
-          passDisplay(stringAngka);
+          Serial.print("Servo kebuka");
+          delay(1000);
+          
+          if(i >= 750) {
+            delay(1000);
+            servo.write(0);
+            Serial.print("Servo ketutup");
+            delay(1000);
+          }
+
+          
+          newDataReady = 0;
+          t = millis();
         }
       }
-  
+
+          Serial.print("Load_cell output val: ");
+          Serial.println(i);
+          tampil(i);
+      
+    }
+  }
+
   if(Serial.available() > 0){
     float i;
     char inByte = Serial.read();
@@ -127,21 +130,6 @@ void loop() {
   if (LoadCell.getTareStatus() == true) {
     Serial.println("Tara selesai");
   }
-}
-
-void passDisplay(String password)
-{
-  lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print("Brt: ");
-  lcd.print(password);
-}
-
-void statusDisplay(String status)
-{
-  lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print(status);
 }
 
 void tampil(int j)
