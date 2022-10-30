@@ -1,23 +1,20 @@
 #include <Keypad.h>
 #include <LiquidCrystal_I2C.h>
-#include <Servo.h>
 #include <HX711_ADC.h>
 #include <EEPROM.h>
-
+#include <Servo.h> // include servo library to use its related functions
+#define Servo_PWM 6 // A descriptive name for D6 pin of Arduino to provide PWM signal
+Servo MG995_Servo;  // Define an instance of of Servo with the name of "MG995_Servo"
+  
 const int ROW_NUM = 4;    // four rows
 const int COLUMN_NUM = 4; // three columns
 
-String stringAngka;
-
-bool isKeyActive = false;
 char keys[ROW_NUM][COLUMN_NUM] = {
-    {'1', '2', '3', 'A'},
-    {'4', '5', '6', 'B'},
-    {'7', '8', '9', 'C'},
-    {'*', '0', '#', 'D'}};
+    {'*'},
+    {'#'}};
 
-byte pin_rows[ROW_NUM] = {9, 8, 7, 6};
-byte pin_column[COLUMN_NUM] = {5, 4, 3, 2};
+byte pin_rows[ROW_NUM] = {5,4};
+byte pin_column[COLUMN_NUM] = {3};
 
 // HX711 pin var
 const int HX711_dout = 11;
@@ -34,9 +31,8 @@ HX711_ADC LoadCell(HX711_dout, HX711_sck);
 
 void setup()
 {
-  Serial.begin(9600);
-  servo.attach(10);
-  servo.write(0);
+  Serial.begin(9600); // Initialize UART with 9600 Baud rate
+  MG995_Servo.attach(Servo_PWM);  // Connect D6 of Arduino with PWM signal pin of servo motor
   lcd.begin();
   lcd.backlight();
 
@@ -79,6 +75,21 @@ void loop() {
   
 
   // get smoothed value from the dataset:
+  if (key)
+      {
+        Serial.print(key);
+        if (key == '#')
+        {
+          
+          Serial.print("Servo kebuka");
+          MG995_Servo.write(90); //Turn clockwise at high speed
+          delay(500);
+          MG995_Servo.detach();//Stop. You can use deatch function or use write(x), as x is the middle of 0-180 which is 90, but some lack of precision may change this value
+          delay(500);
+          MG995_Servo.attach(Servo_PWM);
+          
+        }
+      }
   if (newDataReady) {
     if (millis() > t + serialPrintInterval) {
       int i = LoadCell.getData();
@@ -88,34 +99,24 @@ void loop() {
       }
 
      // Keypad logic
-      if (key)
-      {
-        Serial.print(key);
-        if (key == '0')
-        {
-//           isKeyActive = true;
-          // isKeyActive = false;
-          
-          servo.write(90);
-          Serial.print("Servo kebuka");
-          delay(1000);
-          
+      
           if(i >= 750) {
+            Serial.print("Servo ketututp");
+            MG995_Servo.write(0); //Turn clockwise at high speed
+            delay(2000);
+            MG995_Servo.detach();//Stop. You can use deatch function or use write(x), as x is the middle of 0-180 which is 90, but some lack of precision may change this value
             delay(1000);
-            servo.write(0);
-            Serial.print("Servo ketutup");
-            delay(1000);
+            MG995_Servo.attach(Servo_PWM);
+
           }
 
-          
           newDataReady = 0;
-          t = millis();
-        }
-      }
+            t = millis();
+            Serial.print("Load_cell output val: ");
+            Serial.println(i);
+            tampil(i);
 
-          Serial.print("Load_cell output val: ");
-          Serial.println(i);
-          tampil(i);
+          
       
     }
   }
