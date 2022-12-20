@@ -23,6 +23,7 @@ const int HX711_sck = 12;
 // Var for Load cell value
 const int calVal_eepromAdress = 0;
 long t;
+int i = 0;
 
 Keypad keypad = Keypad(makeKeymap(keys), pin_rows, pin_column, ROW_NUM, COLUMN_NUM);
 LiquidCrystal_I2C lcd(0x27, 20, 4);
@@ -46,6 +47,12 @@ void setup()
   lcd.print("Brt: ");
   lcd.setCursor(14, 0);
   lcd.print("gr");
+
+  MG995_Servo.write(0); //Turn clockwise at high speed
+  delay(200);
+  MG995_Servo.detach();//Stop. You can use deatch function or use write(x), as x is the middle of 0-180 which is 90, but some lack of precision may change this value
+  delay(200);
+  MG995_Servo.attach(Servo_PWM);
 
   float calibrationValue;
   calibrationValue = 696.0;
@@ -72,51 +79,53 @@ void loop() {
   const int serialPrintInterval = 0; 
   // check for new data/start next conversion:
   if (LoadCell.update()) newDataReady = true;
+  i = LoadCell.getData();
+
   
-
-  // get smoothed value from the dataset:
-  if (key)
-      {
-        Serial.print(key);
-        if (key == '#')
-        {
+  if (key == '#')
+  {
+    Serial.print(key);
           
-          Serial.print("Servo kebuka");
-          MG995_Servo.write(90); //Turn clockwise at high speed
-          delay(500);
-          MG995_Servo.detach();//Stop. You can use deatch function or use write(x), as x is the middle of 0-180 which is 90, but some lack of precision may change this value
-          delay(500);
-          MG995_Servo.attach(Servo_PWM);
-          
-        }
-      }
+    Serial.print("Servo kebuka");
+    MG995_Servo.write(90); //Turn clockwise at high speed
+    delay(200);
+    MG995_Servo.detach();//Stop. You can use deatch function or use write(x), as x is the middle of 0-180 which is 90, but some lack of precision may change this value
+    delay(200);
+    MG995_Servo.attach(Servo_PWM);
+  }
+  else if(key == '*'){
+    MG995_Servo.write(0);
+    Serial.print(key);
+    i = 0;
+    Serial.print("Nilai i: ");
+    Serial.println(i);
+    tampil(i);
+  }
+  
   if (newDataReady) {
+//    i = LoadCell.getData();
+ 
     if (millis() > t + serialPrintInterval) {
-      int i = LoadCell.getData();
+//      int i = LoadCell.getData();
       
-      if(i<0){
-        i=0;
-      }
-
-     // Keypad logic
+    if(i<0){
+      i=0;
+    }
       
-          if(i >= 750) {
-            Serial.print("Servo ketututp");
-            MG995_Servo.write(0); //Turn clockwise at high speed
-            delay(2000);
-            MG995_Servo.detach();//Stop. You can use deatch function or use write(x), as x is the middle of 0-180 which is 90, but some lack of precision may change this value
-            delay(1000);
-            MG995_Servo.attach(Servo_PWM);
-
-          }
-
-          newDataReady = 0;
-            t = millis();
-            Serial.print("Load_cell output val: ");
-            Serial.println(i);
-            tampil(i);
-
-          
+    if(i >= 900) {
+      Serial.print("Servo ketutup");
+      MG995_Servo.write(0); //Turn clockwise at high speed
+      MG995_Servo.detach();//Stop. You can use deatch function or use write(x), as x is the middle of 0-180 which is 90, but some lack of precision may change this value
+      MG995_Servo.attach(Servo_PWM);
+      i = 900;
+    }
+      
+    newDataReady = 0;
+    t = millis();
+    
+    Serial.print("Load_cell output val: ");
+    Serial.println(i);
+    tampil(i);
       
     }
   }
@@ -127,16 +136,16 @@ void loop() {
     if (inByte == 't') LoadCell.tareNoDelay(); //tare
   }
 
-  // check if last tare operation is complete
   if (LoadCell.getTareStatus() == true) {
     Serial.println("Tara selesai");
   }
 }
 
-void tampil(int j)
+int tampil(int j)
 {
   lcd.setCursor(4, 0);
   lcd.print("         ");
+  
   if (j < 10)
   {
     lcd.setCursor(12, 0);
@@ -174,4 +183,5 @@ void tampil(int j)
     lcd.setCursor(4, 0);
   }
   lcd.print(j);
+
 }
